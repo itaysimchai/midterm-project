@@ -5,64 +5,76 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="NBA Players Analysis", layout="wide")
+# --- Config ---
+st.set_page_config(page_title="NBA Data App", layout="wide")
 
-# ---- HEADER ----
-st.title("🏀 NBA Players Analysis")
-st.markdown("""
-This interactive Streamlit app explores trends in NBA player physical attributes using a historical dataset.
-We highlight three key visual insights from decades of data.
-""")
+# --- Header ---
+st.title("🏀 NBA Players Stats Explorer")
+st.markdown("**Explore how NBA players have evolved over time through physical attributes.**")
 
-# ---- LOAD DATA ----
+st.image("https://upload.wikimedia.org/wikipedia/en/0/03/NBA_logo.svg", width=100)
+
+# --- Sidebar ---
+st.sidebar.title("📊 Choose a Graph")
+chart_option = st.sidebar.radio(
+    "Select an insight to view:",
+    [
+        "📏 Distribution of Heights",
+        "📈 Avg Height by Decade",
+        "⚖️ Height vs. Weight",
+    ]
+)
+
+# --- Load and prep data ---
 @st.cache_data
 def load_data():
     url = 'https://www.dropbox.com/scl/fi/dp276p1m6sz2izmg5kugw/Players.csv?rlkey=gfrwg66zeeof6vjs5jxfoyhym&dl=1'
     df = pd.read_csv(url)
-
     if 'Unnamed: 0' in df.columns:
         df = df.drop(columns=['Unnamed: 0'])
-
     df = df.drop_duplicates()
     df['decade'] = (df['born'] // 10) * 10
     return df
 
 df = load_data()
 
-# ---- PLOT 1: Height Distribution ----
-st.subheader("📏 Distribution of Player Heights")
+# --- Plot 1: Height Distribution ---
+if chart_option == "📏 Distribution of Heights":
+    st.subheader("📏 Distribution of NBA Player Heights")
+    fig, ax = plt.subplots(figsize=(8, 4))
+    sns.histplot(df['height'], kde=True, color='dodgerblue', ax=ax)
+    ax.set_title('Distribution of NBA Player Heights')
+    ax.set_xlabel('Height (cm)')
+    ax.set_ylabel('Number of Players')
+    ax.grid(True)
+    st.pyplot(fig)
+    st.info("Most NBA players are between 190–210 cm tall, showing a strong preference for taller athletes.")
 
-fig1, ax1 = plt.subplots(figsize=(8, 4))
-sns.histplot(df['height'], kde=True, color='dodgerblue', ax=ax1)
-ax1.set_title('Distribution of NBA Player Heights')
-ax1.set_xlabel('Height (cm)')
-ax1.set_ylabel('Number of Players')
-ax1.grid(True)
-st.pyplot(fig1)
+# --- Plot 2: Avg Height by Decade ---
+elif chart_option == "📈 Avg Height by Decade":
+    st.subheader("📈 Average Height by Birth Decade")
+    avg_height = df.groupby('decade')['height'].mean().reset_index()
+    fig, ax = plt.subplots(figsize=(10, 5))
+    sns.lineplot(data=avg_height, x='decade', y='height', marker='o', color='orange', ax=ax)
+    ax.set_title('Average Height of NBA Players by Decade')
+    ax.set_xlabel('Decade')
+    ax.set_ylabel('Average Height (cm)')
+    ax.grid(True)
+    st.pyplot(fig)
+    st.info("Player height has steadily increased over the decades, reflecting evolving game strategies.")
 
-# ---- PLOT 2: Average Height by Decade ----
-st.subheader("📈 Average Height Over Time")
+# --- Plot 3: Height vs Weight ---
+elif chart_option == "⚖️ Height vs. Weight":
+    st.subheader("⚖️ Height vs Weight Relationship")
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.scatterplot(data=df, x='height', y='weight', alpha=0.7, color='purple', ax=ax)
+    ax.set_title('Height vs. Weight of NBA Players')
+    ax.set_xlabel('Height (cm)')
+    ax.set_ylabel('Weight (kg)')
+    ax.grid(True)
+    st.pyplot(fig)
+    st.info("As expected, taller players tend to weigh more, forming a natural upward trend.")
 
-avg_height = df.groupby('decade')['height'].mean().reset_index()
-fig2, ax2 = plt.subplots(figsize=(10, 5))
-sns.lineplot(data=avg_height, x='decade', y='height', marker='o', color='orange', ax=ax2)
-ax2.set_title('Average Height of NBA Players by Decade')
-ax2.set_xlabel('Decade')
-ax2.set_ylabel('Average Height (cm)')
-ax2.grid(True)
-st.pyplot(fig2)
-
-# ---- PLOT 3: Height vs. Weight ----
-st.subheader("⚖️ Height vs. Weight Relationship")
-
-fig3, ax3 = plt.subplots(figsize=(8, 5))
-sns.scatterplot(data=df, x='height', y='weight', alpha=0.7, color='purple', ax=ax3)
-ax3.set_title('Height vs. Weight of NBA Players')
-ax3.set_xlabel('Height (cm)')
-ax3.set_ylabel('Weight (kg)')
-ax3.grid(True)
-st.pyplot(fig3)
-
-# ---- FOOTER ----
+# --- Footer ---
 st.markdown("---")
-st.markdown("Built with ❤️ using Streamlit · Data from [Kaggle](https://www.kaggle.com/datasets/drgilermo/nba-players-stats)")
+st.markdown("Made with ❤️ using [Streamlit](https://streamlit.io) · Data from [Kaggle](https://www.kaggle.com/datasets/drgilermo/nba-players-stats)")
